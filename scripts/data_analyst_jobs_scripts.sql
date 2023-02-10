@@ -136,3 +136,45 @@ GROUP BY domain
 ORDER BY num_domain DESC;
 
 --	Internet and Software (62); Banks and Financial Services (61); Consulting and Business Services (57); Healthcare (52)
+
+-- BONUS^2
+
+-- 1. For each company, give the company name and the difference between its star rating and the national average star rating.
+	 
+SELECT d.company, 
+	AVG(d.star_rating) as avg_rating,
+	AVG(d.star_rating) - 
+		(SELECT AVG(d2.star_rating)
+		FROM data_analyst_jobs as d2) as difference_from_national
+FROM data_analyst_jobs as d
+INNER JOIN data_analyst_jobs as d2
+ON d.company=d2.company AND d.star_rating IS NOT NULL
+GROUP BY d.company
+ORDER BY difference_from_national DESC,company;
+
+
+
+-- 2. Using a correlated subquery: For each company, give the company name, its domain, its star rating, and its domain average star rating
+
+SELECT d.company as company_name,
+	d.domain as domain,
+	d.star_rating as rating,
+	(SELECT AVG(star_rating)
+	FROM data_analyst_jobs as sub
+	WHERE d.domain = sub.domain) as domain_avg
+FROM data_analyst_jobs as d
+ORDER BY domain, rating DESC, company_name;
+
+-- 3. Repeat question 2 using a CTE instead of a correlated subquery
+WITH c AS (
+SELECT AVG(star_rating)
+	FROM data_analyst_jobs as sub
+	WHERE d.domain = sub.domain )
+
+SELECT d.company as company_name,
+	d.domain as domain,
+	d.star_rating as rating,
+	c as domain_avg 
+FROM data_analyst_jobs as d
+ORDER BY domain, rating DESC, company_name;
+
