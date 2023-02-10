@@ -31,9 +31,9 @@ WHERE location IN ('TN', 'KY')
 
 SELECT COUNT(*)
 FROM data_analyst_jobs
-WHERE star_rating > 4;
+WHERE star_rating > 4 AND location = 'TN';
 
---	416 postings
+--	3 postings
 
 -- 5.	How many postings in the dataset have a review count between 500 and 1000?
 
@@ -46,7 +46,7 @@ WHERE review_count BETWEEN 500 AND 1000;
 
 -- 6.	Show the average star rating for companies in each state. The output should show the state as `state` and the average rating for the 			state as `avg_rating`. Which state shows the highest average rating?
 
-SELECT location, AVG(star_rating) as avg_rating
+SELECT location as state, AVG(star_rating) as avg_rating
 FROM data_analyst_jobs
 GROUP BY location
 HAVING AVG(star_rating) IS NOT NULL
@@ -56,8 +56,10 @@ ORDER BY avg_rating DESC;
 
 -- 7.	Select unique job titles from the data_analyst_jobs table. How many are there?
 
-SELECT COUNT(*)
+SELECT COUNT(DISTINCT(title))
 FROM data_analyst_jobs
+
+-- 	881
 
 -- 8.	How many unique job titles are there for California companies?
 
@@ -71,7 +73,7 @@ WHERE location = 'CA';
 
 SELECT company, AVG(star_rating) as avg_rating
 FROM data_analyst_jobs
-WHERE review_count > 5000
+WHERE review_count > 5000 AND company IS NOT NULL
 GROUP BY company;
 
 -- 	40 companies plus 1 qualifying NULL value
@@ -95,7 +97,6 @@ WHERE LOWER(title) LIKE '%analyst%';
 SELECT COUNT(DISTINCT(title))
 FROM data_analyst_jobs
 WHERE LOWER(title) LIKE '%analyst%';
-
 
 SELECT title, COUNT(title)
 FROM data_analyst_jobs
@@ -159,22 +160,28 @@ ORDER BY difference_from_national DESC,company;
 SELECT d.company as company_name,
 	d.domain as domain,
 	d.star_rating as rating,
-	(SELECT AVG(star_rating)
-	FROM data_analyst_jobs as sub
-	WHERE d.domain = sub.domain) as domain_avg
+		(SELECT AVG(star_rating)
+		FROM data_analyst_jobs as sub
+		WHERE d.domain = sub.domain) as domain_avg
 FROM data_analyst_jobs as d
 ORDER BY domain, rating DESC, company_name;
 
+-- Took 432ms to process
+
 -- 3. Repeat question 2 using a CTE instead of a correlated subquery
+
 WITH c AS (
-SELECT AVG(star_rating)
-	FROM data_analyst_jobs as sub
-	WHERE d.domain = sub.domain )
+		SELECT AVG(sub.star_rating) as avg_star_rating, sub.domain
+		FROM data_analyst_jobs as sub
+		GROUP BY sub.domain)
 
 SELECT d.company as company_name,
 	d.domain as domain,
 	d.star_rating as rating,
-	c as domain_avg 
+	c.avg_star_rating as domain_avg 
 FROM data_analyst_jobs as d
+LEFT JOIN c
+	ON d.domain = c.domain
 ORDER BY domain, rating DESC, company_name;
 
+--	Took 64ms to process
